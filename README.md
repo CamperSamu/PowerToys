@@ -1,3 +1,5 @@
+# THIS REPO IS NOT MANTAINED, BUT IT'S AS LATEST AS IT CAN GET FOR THE EVERYTHING PLUGIN
+___
 # Microsoft PowerToys
 
 <img src="./doc/images/overview/PT%20hero%20image.png"/>
