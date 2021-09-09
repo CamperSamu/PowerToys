@@ -16,6 +16,9 @@ public:
     std::optional<GUID> GetCurrentVirtualDesktopId() const;
     std::optional<std::vector<GUID>> GetVirtualDesktopIds() const;
 
+    bool IsWindowOnCurrentDesktop(HWND window) const;
+    std::optional<GUID> GetDesktopId(HWND window) const;
+
 private:
     std::function<void()> m_vdInitCallback;
     std::function<void()> m_vdUpdatedCallback;
@@ -25,6 +28,7 @@ private:
     OnThreadExecutor m_virtualDesktopTrackerThread;
     wil::unique_handle m_terminateVirtualDesktopTrackerEvent;
 
-    std::optional<std::vector<GUID>> GetVirtualDesktopIds(HKEY hKey) const;    
+    std::optional<std::vector<GUID>> GetVirtualDesktopIds(HKEY hKey) const;
+    std::optional<GUID> GetDesktopIdByTopLevelWindows() const;
     void HandleVirtualDesktopUpdates();
 };

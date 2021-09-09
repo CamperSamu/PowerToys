@@ -167,7 +167,9 @@ std::optional<GUID> VirtualDesktop::GetCurrentVirtualDesktopId() const
         }
     }
 
-    return std::nullopt;
+    desktopId = GetDesktopIdByTopLevelWindows();
+        
+    return desktopId;
 }
 
 std::optional<std::vector<GUID>> VirtualDesktop::GetVirtualDesktopIds(HKEY hKey) const
@@ -206,6 +208,53 @@ std::optional<std::vector<GUID>> VirtualDesktop::GetVirtualDesktopIds(HKEY hKey)
 std::optional<std::vector<GUID>> VirtualDesktop::GetVirtualDesktopIds() const
 {
     return GetVirtualDesktopIds(GetVirtualDesktopsRegKey());
+}
+
+bool VirtualDesktop::IsWindowOnCurrentDesktop(HWND window) const
+{
+    std::optional<GUID> id = GetDesktopId(window);
+    return id.has_value();
+}
+
+std::optional<GUID> VirtualDesktop::GetDesktopId(HWND window) const
+{
+    GUID id;
+    BOOL isWindowOnCurrentDesktop = false;
+    if (m_vdManager->IsWindowOnCurrentVirtualDesktop(window, &isWindowOnCurrentDesktop) == S_OK && isWindowOnCurrentDesktop)
+    {
+        // Filter windows such as Windows Start Menu, Task Switcher, etc.
+        if (m_vdManager->GetWindowDesktopId(window, &id) == S_OK && id != GUID_NULL)
+        {
+            return id;
+        }
+    }
+
+    return std::nullopt;
+}
+
+std::optional<GUID> VirtualDesktop::GetDesktopIdByTopLevelWindows() const
+{
+    using result_t = std::vector<HWND>;
+    result_t result;
+
+    auto callback = [](HWND window, LPARAM data) -> BOOL {
+        result_t& result = *reinterpret_cast<result_t*>(data);
+        result.push_back(window);
+        return TRUE;
+    };
+    EnumWindows(callback, reinterpret_cast<LPARAM>(&result));
+
+    for (const auto window : result)
+    {
+        std::optional<GUID> id = GetDesktopId(window);
+        if (id.has_value())
+        {
+            // Otherwise keep checking other windows
+            return id;
+        }
+    }
+
+    return std::nullopt;
 }
 
 void VirtualDesktop::HandleVirtualDesktopUpdates()
